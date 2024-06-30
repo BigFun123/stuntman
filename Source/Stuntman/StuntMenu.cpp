@@ -2,6 +2,7 @@
 
 
 #include "StuntMenu.h"
+#include "Recorder/RecorderConstants.h"
 
 void UStuntMenu::OnStartClicked()
 {	
@@ -24,6 +25,6 @@ void UStuntMenu::OnSaveAsStartupClicked()
 bool UStuntMenu::Initialize()
 {	
 	bool result = Super::Initialize();
-	PubSub::Send("Initialize");
+	PubSub::Send(SM_INITIALIZING);
 	return result;
 }

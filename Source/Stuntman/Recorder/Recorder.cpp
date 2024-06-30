@@ -2,6 +2,7 @@
 
 #include "Recorder.h"
 #include "../PubSub/PubSub.h"
+#include "RecorderConstants.h"
 #include "Serialization/JsonSerializer.h"
 
 Recorder &Recorder::GetInstance()
@@ -49,7 +50,7 @@ TStatId Recorder::GetStatId() const
 
 void Recorder::onMessage(const FName &message)
 {
-	if (message == "Initialize") {
+	if (message == SM_INITIALIZING) {
 		Counter = 0;
 		Time = 0;
 		Take = 0;		
