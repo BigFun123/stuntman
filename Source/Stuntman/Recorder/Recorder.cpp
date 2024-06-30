@@ -2,6 +2,7 @@
 
 #include "Recorder.h"
 #include "../PubSub/PubSub.h"
+#include "Serialization/JsonSerializer.h"
 
 Recorder &Recorder::GetInstance()
 {
@@ -48,6 +49,13 @@ TStatId Recorder::GetStatId() const
 
 void Recorder::onMessage(const FName &message)
 {
+	if (message == "Initialize") {
+		Counter = 0;
+		Time = 0;
+		Take = 0;		
+		SceneName = "Scene";
+		StopRecording();
+	}
 	if (message == "SaveStartup") {
 		SaveStartup();
 	}
@@ -123,6 +131,7 @@ void Recorder::SaveStartup()
 	FString SaveDirectory = FPaths::ProjectSavedDir();
 	FString FileName = FString::Printf(TEXT("Scene_%d_Startup.jsonl"), Scene, Take);
 	FString AbsoluteFilePath = SaveDirectory + FileName;
+	FFileHelper::SaveStringToFile(TEXT(""), *AbsoluteFilePath, FFileHelper::EEncodingOptions::AutoDetect, &IFileManager::Get(), FILEWRITE_None);
 	LogJSON(AbsoluteFilePath);
 }
 

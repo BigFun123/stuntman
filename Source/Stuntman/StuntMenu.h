@@ -11,7 +11,7 @@
 //DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnStartClicked);
 
 /**
- * 
+ * Main Menu for the Stuntman app
  */
 UCLASS()
 class STUNTMAN_API UStuntMenu : public UUserWidget
@@ -26,4 +26,6 @@ class STUNTMAN_API UStuntMenu : public UUserWidget
 
 	UFUNCTION(BlueprintCallable, Category=UI)
 	void OnSaveAsStartupClicked();
+	
+	virtual bool Initialize() override;
 };

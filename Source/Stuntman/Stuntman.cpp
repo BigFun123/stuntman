@@ -7,4 +7,4 @@
 IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, Stuntman, "Stuntman" );
  
 // instantiate Recorder
-Recorder r = Recorder::GetInstance();
+Recorder SM_REC = Recorder::GetInstance();

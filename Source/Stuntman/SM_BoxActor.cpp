@@ -35,6 +35,12 @@ void ASM_BoxActor::BeginPlay()
 	Super::BeginPlay();
 }
 
+void ASM_BoxActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Recorder::RemoveObject(this);
+	Super::EndPlay(EndPlayReason);
+}
+
 // Called every frame
 void ASM_BoxActor::Tick(float DeltaTime)
 {

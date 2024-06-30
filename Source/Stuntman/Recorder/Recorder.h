@@ -7,15 +7,13 @@
 #include "../PubSub/Subscriber.h"
 
 /**
- * 
+ * Event Recorder that streams JSONL objects
  */
 class STUNTMAN_API Recorder : public FTickableGameObject, public ISubscriber
 {
-public:
-	bool Recording = false;	
+public:	
 	std::vector<const AActor*> objects;
-	static Recorder& GetInstance();
-	
+	bool Recording = false;	
 	float Time = 0;
 	int Counter = 0;
 	int Scene = 1;
@@ -27,6 +25,7 @@ public:
 
 	Recorder();
 	virtual ~Recorder();
+	static Recorder& GetInstance();
 	
 	void LogText();
 	void LogJSON(const FString& name);
