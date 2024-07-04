@@ -17,15 +17,40 @@ UCLASS()
 class STUNTMAN_API UStuntMenu : public UUserWidget
 {
 	GENERATED_BODY()
+
+	UFUNCTION(BlueprintCallable, Category=UI)
+	void OnNewClicked();
 	
 	UFUNCTION(BlueprintCallable, Category=UI)
 	void OnStartClicked();
+
+	UFUNCTION(BlueprintCallable, Category=UI)
+	void OnStopClicked();
 
 	UFUNCTION(BlueprintCallable, Category=UI)
 	void OnResetClicked();
 
 	UFUNCTION(BlueprintCallable, Category=UI)
 	void OnSaveAsStartupClicked();
+
+	UFUNCTION(BlueprintCallable, Category=UI)
+	void OnLoad();
+	
+	UFUNCTION(BlueprintCallable, Category=UI)
+	void OnSave();
+
+	UFUNCTION(BlueprintCallable, Category=UI)
+	void NextTake();
+
+	UFUNCTION(BlueprintCallable, Category=UI)
+	void PrevTake();
+
+public:
+	UPROPERTY(EditAnywhere, Category=UI)
+	int Scene = 1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category=UI)
+	int Take = 1;
 	
 	virtual bool Initialize() override;
 };

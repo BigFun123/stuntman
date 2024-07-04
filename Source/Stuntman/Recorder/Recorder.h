@@ -3,6 +3,8 @@
 #pragma once
 
 #include <vector>
+#include <unordered_map>
+#include "RecorderEvent.h"
 #include "CoreMinimal.h"
 #include "../PubSub/Subscriber.h"
 
@@ -11,30 +13,44 @@
  */
 class STUNTMAN_API Recorder : public FTickableGameObject, public ISubscriber
 {
-public:	
-	std::vector<const AActor*> objects;
+public:		
+	std::unordered_map<AActor*, std::vector<FRecorderEvent>> recordings;
 	bool Recording = false;	
 	float Time = 0;
 	int Counter = 0;
 	int Scene = 1;
-	int Take = 0;	
+	int Take = 1;	
+	
 	FString SceneName = "Scene";
 	void Tick(float DeltaTime) override;
 	TStatId GetStatId() const override;
 	void SetTime(float AbsoluteTime);
+	void NextTake();
+	void PrevTake();
+	void AddEvent(AActor* object);
+	void AddEvents();
+	void NewScene();
+	void Save();
+	void Load();
 
 	Recorder();
 	virtual ~Recorder();
 	static Recorder& GetInstance();
+	float Round2(float f);
 	
 	void LogText();
 	void LogJSON(const FString& name);
 	void StartRecording();
 	void StopRecording();
 	void SaveStartup();
-	void onMessage(const FName& message);
+	void LoadStartup();
+	void onMessage(PubSubMessage& message) override;
+	void SpawnObject(FString ActorClassPath, UWorld* world);
 
 	// use these in Blueprint constructors to add and remove. note: you MUST implement RemoveObject in the destructor
-	static void AddObject(const AActor* object);
-	static void RemoveObject(const AActor* object);
+	static void AddObject(AActor* object);
+	static void RemoveObject(AActor* object);
+	
+	static int GetTake();
+	static int GetScene();
 };

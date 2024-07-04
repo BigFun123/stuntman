@@ -5,6 +5,7 @@
 #include "CoreMinimal.h"
 #include "WheeledVehiclePawn.h"
 #include "PubSub/Subscriber.h"
+#include "PubSub/PubSubMessage.h"
 #include "StuntmanPawn.generated.h"
 
 class UCameraComponent;
@@ -83,7 +84,7 @@ public:
 	AStuntmanPawn();
 	~AStuntmanPawn();
 
-	void onMessage(const FName& message);
+	void onMessage(const FName& message, PubSubMessage& payload);
 	//void send(const FString& message);
 
 	// Begin Pawn interface

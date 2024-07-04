@@ -35,11 +35,11 @@ void PubSub::Unsubscribe(ISubscriber* pSubscriber) {
 	PubSub::GetInstance().removeSubscriber(pSubscriber);
 }
 
-void PubSub::Send(const FName& message) {
+void PubSub::Send(PubSubMessage& payload) {
 	auto GetInstancesubscribers = PubSub::GetInstance().subscribers;	
 	for (int i = 0; i < GetInstancesubscribers.size(); i++) {
 		if (GetInstancesubscribers[i] != nullptr) {
-			GetInstancesubscribers[i]->onMessage(message);
+			GetInstancesubscribers[i]->onMessage(payload);
 		}	
 	}	
 }

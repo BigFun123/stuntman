@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include "Subscriber.h"
+#include "PubSubMessage.h"
 
 /**
  * PUBSUB message bus 
@@ -28,6 +29,6 @@ class PubSub
 		// send a message to all subscribers
 		static void Subscribe(ISubscriber* subscriber);
 		static void Unsubscribe(ISubscriber* subscriber);
-		static void Send(const FName& message);
+		static void Send(PubSubMessage& payload);
 };
 
