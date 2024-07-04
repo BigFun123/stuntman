@@ -70,7 +70,10 @@ void ASM_BoxActor::BeginPlay()
 	}
 
 */
-	Recorder::AddObject(this);
+// only add if we're not an editor object
+	if (!HasAnyFlags(RF_Transient)) {
+		Recorder::AddObject(this);
+	}	
 	Super::BeginPlay();
 }
 

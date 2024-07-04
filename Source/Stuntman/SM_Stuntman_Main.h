@@ -5,16 +5,16 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "PubSub/PubSub.h"
-#include "SM_SpawnFactory.generated.h"
+#include "SM_Stuntman_Main.generated.h"
 
 UCLASS()
-class STUNTMAN_API ASM_SpawnFactory : public AActor, public ISubscriber
+class STUNTMAN_API ASM_Stuntman_Main : public AActor, public ISubscriber 
 {
 	GENERATED_BODY()
 	
 public:	
 	// Sets default values for this actor's properties
-	ASM_SpawnFactory();
+	ASM_Stuntman_Main();
 
 protected:
 	// Called when the game starts or when spawned

@@ -1,12 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 
-#include "SM_SpawnFactory.h"
+#include "SM_Stuntman_Main.h"
 #include "PubSub/PubSub.h"
 #include "Recorder/RecorderConstants.h"
 
 // Sets default values
-ASM_SpawnFactory::ASM_SpawnFactory()
+ASM_Stuntman_Main::ASM_Stuntman_Main()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -14,20 +14,20 @@ ASM_SpawnFactory::ASM_SpawnFactory()
 }
 
 // Called when the game starts or when spawned
-void ASM_SpawnFactory::BeginPlay()
+void ASM_Stuntman_Main::BeginPlay()
 {
 	Super::BeginPlay();
 	
 }
 
 // Called every frame
-void ASM_SpawnFactory::Tick(float DeltaTime)
+void ASM_Stuntman_Main::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
 }
 
-void ASM_SpawnFactory::SpawnObject(FString ActorClassPath, UWorld* world)
+void ASM_Stuntman_Main::SpawnObject(FString ActorClassPath, UWorld* world)
 {
 	PubSubMessage pm;
 	pm.message = SM_SPAWN;
@@ -36,7 +36,7 @@ void ASM_SpawnFactory::SpawnObject(FString ActorClassPath, UWorld* world)
 	PubSub::Send(pm);
 }
 
-void ASM_SpawnFactory::onMessage(PubSubMessage& payload)
+void ASM_Stuntman_Main::onMessage(PubSubMessage& payload)
 {
 	if (payload.message == SM_SPAWN) {
 		FString ActorClassPath = payload.spayload;
@@ -55,7 +55,7 @@ void ASM_SpawnFactory::onMessage(PubSubMessage& payload)
 	}
 }
 
-void ASM_SpawnFactory::OnDestroy(AActor* actor)
+void ASM_Stuntman_Main::OnDestroy(AActor* actor)
 {
 	PubSubMessage pm;
 	pm.message = SM_DESTROY;

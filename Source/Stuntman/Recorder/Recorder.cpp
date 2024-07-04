@@ -31,20 +31,20 @@ void Recorder::Tick(float DeltaTime)
 	if (Recording)
 	{
 		Time += DeltaTime;
-		
+
 		PubSubMessage pm;
-		pm.message = SM_SETTIME;
-		pm.fpayload = Time;
-		PubSub::send(pm)
+		// pm.message = SM_SETTIME;
+		// pm.fpayload = Time;
+		// PubSub::Send(pm);
 		Counter++;
-		AddEvents();	
+		AddEvents();
 	}
 	else
 	{
 		color = FColor::Red;
 	}
 
-	FString Message = FString::Printf(TEXT("Scene 1 Take %d     Frame %d"), Take, Counter);
+	FString Message = FString::Printf(TEXT("Scene 1 Take %d     Frame %d  Time %f"), Take, Counter, Time);
 	GEngine->AddOnScreenDebugMessage(0, 0, color, Message);
 }
 
@@ -78,25 +78,18 @@ void Recorder::AddEvent(AActor *actor)
 	FRecorderEvent event;
 	event.Name = actor->GetName();
 	event.Time = Time;
+
+	// get physics properties
+	// UPrimitiveComponent *comp = Cast<UPrimitiveComponent>(actor->GetRootComponent());
+	// if (comp) {
+	//	event.Position = comp->GetComponentLocation();
+	//	event.Rotation = comp->GetComponentRotation().Euler();
+	//}
+
 	event.Position = actor->GetActorLocation();
 	event.Type = actor->GetClass()->GetName();
-	// route to 2 decimal places
-	event.Position.X = event.Position.X;
-	event.Position.Y = event.Position.Y;
-	event.Position.Z = event.Position.Z;
-
-	event.Rotation = actor->GetActorRotation().Euler();
-	// route to 2 decimal places
-	event.Rotation.X = event.Rotation.X;
-	event.Rotation.Y = event.Rotation.Y;
-	event.Rotation.Z = event.Rotation.Z;
-
+	event.Rotation = actor->GetActorRotation().Quaternion();
 	event.Velocity = actor->GetVelocity();
-	// route to 2 decimal places
-	event.Velocity.X = event.Velocity.X;
-	event.Velocity.Y = event.Velocity.Y;
-	event.Velocity.Z = event.Velocity.Z;
-
 	// event.AngularVelocity = actor->GetActorAngularVelocity();
 	event.Scene = Scene;
 
@@ -167,7 +160,7 @@ void Recorder::NewScene()
 	// stop recording
 	StopRecording();
 	// save the current take
-	//Save();
+	// Save();
 	// reset the take
 	Take = 1;
 
@@ -190,8 +183,8 @@ void Recorder::NewScene()
 		}
 	}*/
 
-// clear all recordings but keep the actors of type SM_HumanActor
- for (const auto &recording : recordings)
+	// clear all recordings but keep the actors of type SM_HumanActor
+	for (const auto &recording : recordings)
 	{
 		AActor *object = recording.first;
 		if (object != nullptr)
@@ -199,14 +192,14 @@ void Recorder::NewScene()
 			if (object->GetClass()->GetName() != "SM_HumanActor")
 			{
 				recordings.erase(object);
-			} else {
+			}
+			else
+			{
 				// just clear the events
 				recordings[object].clear();
 			}
 		}
-	
 	}
-
 }
 
 void Recorder::SpawnObject(FString ActorClassPath, UWorld *world)
@@ -247,6 +240,21 @@ void Recorder::StartRecording()
 	Counter = 0;
 	Time = 0;
 	Recording = true;
+
+	for (const auto &recording : recordings)
+	{
+		AActor *object = recording.first;
+
+		UPrimitiveComponent *comp = Cast<UPrimitiveComponent>(object->GetRootComponent());
+		if (comp)
+		{
+			// check if it's of type SM_BoxActor
+			 if (object->GetClass()->GetName() == "SM_BoxActor")
+			 {
+				comp->SetSimulatePhysics(true);
+			 }
+		}
+	}
 }
 
 void Recorder::StopRecording()
@@ -485,8 +493,50 @@ void Recorder::LogText()
 void Recorder::SetTime(float AbsoluteTime)
 {
 	Time = AbsoluteTime;
-	// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Red, FString::Printf(TEXT("SetTime: %f"), Time));
 	// get the position of all objects at time, and set their current position to that
+	for (const auto &recording : recordings)
+	{
+		AActor *object = recording.first;
+
+		UPrimitiveComponent *comp = Cast<UPrimitiveComponent>(object->GetRootComponent());
+		if (comp)
+		{
+			comp->SetSimulatePhysics(false);
+		}
+
+		// disable physics
+		/*if (object->GetRootComponent() != nullptr)
+		{
+			if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(object->GetRootComponent()))
+			{
+				PrimitiveComponent->SetSimulatePhysics(false);
+			}
+		}
+		object->SetActorEnableCollision(false);
+		*/
+
+		//	UWorld* world = object->GetWorld();
+		//	AWorldSettings* ws = world->GetWorldSettings();
+		// world->SetPhysicsDisabled(object);
+		// ws->SetGravityEnabled(false);
+		//	ws->WorldGravityZ = 0;
+
+		const std::vector<FRecorderEvent> *events = &recording.second;
+		// walk up events until the time is greater than the current time
+		for (int i = 0; i < events->size(); i++)
+		{
+			const FRecorderEvent *event = &events->at(i);
+			if (event->Time >= Time)
+			{
+				// object->SetAllPhysicsPosition(event->Position);
+				// object->SetAllPhysicsRotation(FRotator(event->Rotation.X, event->Rotation.Y, event->Rotation.Z));
+				//  set the position of the object to the position of the event
+				object->SetActorLocation(event->Position, false, nullptr, ETeleportType::TeleportPhysics);
+				object->SetActorRotation(event->Rotation, ETeleportType::TeleportPhysics);
+				break;
+			}
+		}
+	}
 	// find the time in the
 }
 

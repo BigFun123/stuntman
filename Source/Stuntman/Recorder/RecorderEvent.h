@@ -13,7 +13,7 @@ public:
     FVector Position = FVector(0,0,0);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FVector Rotation = FVector(0,0,0);
+    FQuat Rotation = FQuat(0,0,0,0);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     FVector Velocity = FVector(0,0,0);

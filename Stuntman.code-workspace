@@ -13,60 +13,8 @@
 		"typescript.tsc.autoDetect": "off",
 		"npm.autoDetect": "off",
 		"files.associations": {
-			"vector": "cpp",
-			"unordered_map": "cpp",
-			"__bit_reference": "cpp",
-			"__bits": "cpp",
-			"__config": "cpp",
-			"__debug": "cpp",
-			"__split_buffer": "cpp",
-			"__threading_support": "cpp",
-			"__tuple": "cpp",
-			"__verbose_abort": "cpp",
-			"atomic": "cpp",
-			"bit": "cpp",
-			"cmath": "cpp",
-			"cstddef": "cpp",
-			"cstdint": "cpp",
-			"cstdio": "cpp",
-			"cstdlib": "cpp",
-			"cstring": "cpp",
-			"cwchar": "cpp",
-			"exception": "cpp",
-			"initializer_list": "cpp",
-			"iomanip": "cpp",
-			"ios": "cpp",
-			"iosfwd": "cpp",
-			"iostream": "cpp",
-			"istream": "cpp",
-			"limits": "cpp",
 			"map": "cpp",
-			"memory": "cpp",
-			"new": "cpp",
-			"ostream": "cpp",
-			"sstream": "cpp",
-			"stdexcept": "cpp",
-			"streambuf": "cpp",
-			"string": "cpp",
-			"string_view": "cpp",
-			"tuple": "cpp",
-			"type_traits": "cpp",
-			"typeinfo": "cpp",
-			"*.ipp": "cpp",
-			"__hash_table": "cpp",
-			"__tree": "cpp",
-			"hash_map": "cpp",
-			"set": "cpp",
-			"unordered_set": "cpp",
-			"regex": "cpp",
-			"mprealsupport": "cpp",
-			"deque": "cpp",
-			"list": "cpp",
-			"__node_handle": "cpp",
-			"array": "cpp",
-			"forward_list": "cpp",
-			"span": "cpp",
-			"valarray": "cpp"
+			"queue": "cpp"
 		}
 	},
 	"extensions": {
@@ -358,13 +306,12 @@
 					"Debug",
 					"C:\\dev\\Stuntman\\Stuntman.uproject",
 					"-waitmutex"
-				],				
+				],
 				"problemMatcher": "$msCompile",
 				"type": "shell",
 				"options": {
 					"cwd": "C:\\dev\\UE54\\UE_5.4"
-				},
-				"requireExactSource": false
+				}
 			},
 			{
 				"label": "StuntmanEditor Win64 Debug Rebuild",
@@ -384,8 +331,7 @@
 				"type": "shell",
 				"options": {
 					"cwd": "C:\\dev\\UE54\\UE_5.4"
-				},
-				"requireExactSource": false
+				}
 			},
 			{
 				"label": "StuntmanEditor Win64 Debug Clean",
