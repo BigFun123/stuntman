@@ -29,4 +29,7 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+	UFUNCTION(BlueprintCallable, Category = "Box")
+	void Detonate(bool bDetonate);
+
 };

@@ -5,6 +5,7 @@
 #include "Runtime/Engine/Classes/Engine/World.h"
 #include "../PubSub/PubSub.h"
 #include "RecorderConstants.h"
+#include "../SM_BoxActor.h"
 #include "Serialization/JsonSerializer.h"
 #include "JsonObjectConverter.h"
 
@@ -25,18 +26,80 @@ Recorder::~Recorder()
 	StopRecording();
 }
 
-void Recorder::Tick(float DeltaTime)
+void Recorder::onMessage(PubSubMessage &payload)
+{
+	if (payload.message == SM_DETONATE)
+	{
+		Frame = payload.ipayload;		
+		RecordFrame();
+		DetonateObjects(payload.bpayload);		
+	}
+	
+	if (payload.message == SM_NEW)
+	{
+		NewScene();
+	}
+
+	if (payload.message == SM_SETTAKE)
+	{
+		Take = payload.ipayload;
+		Load();
+	}
+	//if (payload.message == SM_SETTIME)
+	//{
+	//	float time = payload.fpayload;
+	//	SetTime(time);
+	//}
+	if (payload.message == SM_GOTOFRAME)
+	{
+		GotoFrame(payload.ipayload);
+	}
+
+	if (payload.message == SM_RECORDFRAME)
+	{
+		Frame = payload.ipayload;
+		RecordFrame();
+	}
+
+	if (payload.message == SM_INITIALIZING)
+	{
+		Frame = 0;				
+		Take = 0;
+		SceneName = "Scene";
+		StopRecording();
+	}
+	if (payload.message == SM_SAVESTARTUP)
+	{
+		SaveStartup();
+	}
+	if (payload.message == SM_RESET)
+	{
+		Frame = 0;
+		Take = 0;
+		SceneName = "Scene";
+		StopRecording();
+	}
+	if (payload.message == SM_START)
+	{
+		StartRecording();
+	}
+	else if (payload.message == SM_STOP)
+	{
+		StopRecording();
+		Save();
+	}
+	if (payload.message == SM_LOAD)
+	{
+		Load();
+	}
+}
+
+/*void Recorder::Tick(float DeltaTime)
 {
 	FColor color = FColor::Green;
 	if (Recording)
 	{
-		Time += DeltaTime;
-
-		PubSubMessage pm;
-		// pm.message = SM_SETTIME;
-		// pm.fpayload = Time;
-		// PubSub::Send(pm);
-		Counter++;
+		Frame++;		
 		AddEvents();
 	}
 	else
@@ -44,11 +107,14 @@ void Recorder::Tick(float DeltaTime)
 		color = FColor::Red;
 	}
 
-	FString Message = FString::Printf(TEXT("Scene 1 Take %d     Frame %d  Time %f"), Take, Counter, Time);
+	FString Message = FString::Printf(TEXT("Scene 1 Take %d  Frame %d"), Take, Frame);
 	GEngine->AddOnScreenDebugMessage(0, 0, color, Message);
-}
 
-void Recorder::AddEvents()
+	// show a representation of the surrounding 50 events in text format, one per line
+
+}*/
+
+void Recorder::RecordFrame()
 {
 	// add an even for each object in the recordings
 	for (const auto &recording : recordings)
@@ -73,11 +139,12 @@ float Recorder::Round2(float f)
 	return rf;
 }
 
-void Recorder::AddEvent(AActor *actor)
+void Recorder::AddEvent(AActor *actor, int eventCode)
 {
 	FRecorderEvent event;
 	event.Name = actor->GetName();
-	event.Time = Time;
+	event.Frame = Frame;
+	event.Event = eventCode;
 
 	// get physics properties
 	// UPrimitiveComponent *comp = Cast<UPrimitiveComponent>(actor->GetRootComponent());
@@ -98,60 +165,26 @@ void Recorder::AddEvent(AActor *actor)
 	recordings[actor].push_back(event);
 }
 
-TStatId Recorder::GetStatId() const
+void Recorder::DetonateObjects(bool bDetonate)
 {
-	return TStatId();
-}
-
-void Recorder::onMessage(PubSubMessage &payload)
-{
-	if (payload.message == SM_NEW)
+	// for each object in the recordings, detonate
+	for (const auto &recording : recordings)
 	{
-		NewScene();
-	}
-
-	if (payload.message == SM_SETTAKE)
-	{
-		Take = payload.ipayload;
-		Load();
-	}
-	if (payload.message == SM_SETTIME)
-	{
-		float time = payload.fpayload;
-		SetTime(time);
-	}
-	if (payload.message == SM_INITIALIZING)
-	{
-		Counter = 0;
-		Time = 0;
-		Take = 0;
-		SceneName = "Scene";
-		StopRecording();
-	}
-	if (payload.message == SM_SAVESTARTUP)
-	{
-		SaveStartup();
-	}
-	if (payload.message == SM_RESET)
-	{
-		Counter = 0;
-		Time = 0;
-		Take = 0;
-		SceneName = "Scene";
-		StopRecording();
-	}
-	if (payload.message == SM_START)
-	{
-		StartRecording();
-	}
-	else if (payload.message == SM_STOP)
-	{
-		StopRecording();
-		Save();
-	}
-	if (payload.message == SM_LOAD)
-	{
-		Load();
+		AActor *object = recording.first;
+		// if the object is of type SM_BoxActor, then detonate
+		UE_LOG(LogTemp, Warning, TEXT("Class: %s"), *object->GetClass()->GetName());
+		 if (IsBarrel(object))
+		 {
+			// object->Detonate(bDetonate);
+			// cast as SM_BoxActor
+			AddEvent(object, bDetonate == true ? SM_EVT_DETONATE : SM_EVT_EXTINGUISH); // detonate event
+			
+			ASM_BoxActor *box = Cast<ASM_BoxActor>(object);
+			if (box)
+			{
+				box->Detonate(bDetonate);
+			}
+		 }
 	}
 }
 
@@ -212,6 +245,7 @@ void Recorder::SpawnObject(FString ActorClassPath, UWorld *world)
 	world->MarkPackageDirty();
 }
 
+// small bug: objects are being added at their spawn location, not their physics settled location
 void Recorder::AddObject(AActor *object)
 {
 	// check if the object exists in the recordings map
@@ -236,9 +270,7 @@ void Recorder::RemoveObject(AActor *object)
 }
 
 void Recorder::StartRecording()
-{
-	Counter = 0;
-	Time = 0;
+{	
 	Recording = true;
 
 	for (const auto &recording : recordings)
@@ -260,6 +292,18 @@ void Recorder::StartRecording()
 void Recorder::StopRecording()
 {
 	Recording = false;
+
+	for (const auto &recording : recordings)
+	{
+		AActor *object = recording.first;
+
+		UPrimitiveComponent *comp = Cast<UPrimitiveComponent>(object->GetRootComponent());
+		if (comp)
+		{
+			comp->SetSimulatePhysics(true);
+		}
+	}
+
 }
 
 void Recorder::SaveStartup()
@@ -433,10 +477,9 @@ void Recorder::LogJSON(const FString &AbsoluteFilePath)
 
 		// Create the JSON string
 		FString name = "\"name\":\"" + object->GetName() + "\", \"type\":\"actor\",";
-		FString TextToSave = name + FString::Printf(TEXT("\"index\":%d,\"counter\":%d,\"time\":%f,\"globaltime\":%f,\"x\": %f,\"y\":%f,\"z\":%f,\"rx\":%f,\"ry\":%f,\"rz\":%f"),
+		FString TextToSave = name + FString::Printf(TEXT("\"index\":%d,\"frame\":%d,\"globaltime\":%f,\"x\": %f,\"y\":%f,\"z\":%f,\"rx\":%f,\"ry\":%f,\"rz\":%f"),
 													i++,
-													Counter,
-													Time,
+													Frame,
 													CurrentTime,
 													PawnLocation.X, PawnLocation.Y, PawnLocation.Z,
 													PawnRotation.X, PawnRotation.Y, PawnRotation.Z);
@@ -490,9 +533,14 @@ void Recorder::LogText()
 	*/
 }
 
-void Recorder::SetTime(float AbsoluteTime)
+bool Recorder::IsBarrel(AActor *object)
+{	
+	return (object->GetClass()->GetName() == TEXT("BP_Barrel_C"));	
+}
+
+void Recorder::GotoFrame(int InFrame)
 {
-	Time = AbsoluteTime;
+	Frame = InFrame;
 	// get the position of all objects at time, and set their current position to that
 	for (const auto &recording : recordings)
 	{
@@ -504,30 +552,34 @@ void Recorder::SetTime(float AbsoluteTime)
 			comp->SetSimulatePhysics(false);
 		}
 
-		// disable physics
-		/*if (object->GetRootComponent() != nullptr)
-		{
-			if (UPrimitiveComponent* PrimitiveComponent = Cast<UPrimitiveComponent>(object->GetRootComponent()))
-			{
-				PrimitiveComponent->SetSimulatePhysics(false);
-			}
-		}
-		object->SetActorEnableCollision(false);
-		*/
-
-		//	UWorld* world = object->GetWorld();
-		//	AWorldSettings* ws = world->GetWorldSettings();
-		// world->SetPhysicsDisabled(object);
-		// ws->SetGravityEnabled(false);
-		//	ws->WorldGravityZ = 0;
-
 		const std::vector<FRecorderEvent> *events = &recording.second;
 		// walk up events until the time is greater than the current time
 		for (int i = 0; i < events->size(); i++)
 		{
 			const FRecorderEvent *event = &events->at(i);
-			if (event->Time >= Time)
+			if (event->Frame >= Frame)
 			{
+
+				GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Red, FString::Printf(TEXT("%d event:%s"), event->Frame, event->Event), false);
+				//UE_LOG(LogTemp, Warning, TEXT("Event: %d %s"), event->Frame, *event->Name);
+
+				if (event->Event == SM_EVT_DETONATE && IsBarrel(object))
+				{
+					ASM_BoxActor *box = Cast<ASM_BoxActor>(object);
+					if (box)
+					{
+						box->Detonate(true);
+					}
+				}
+
+				if (event->Event == SM_EVT_EXTINGUISH && IsBarrel(object))
+				{
+					ASM_BoxActor *box = Cast<ASM_BoxActor>(object);
+					if (box)
+					{
+						box->Detonate(false);
+					}
+				}
 				// object->SetAllPhysicsPosition(event->Position);
 				// object->SetAllPhysicsRotation(FRotator(event->Rotation.X, event->Rotation.Y, event->Rotation.Z));
 				//  set the position of the object to the position of the event

@@ -22,14 +22,14 @@ public:
     FVector AngularVelocity = FVector(0,0,0);
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    float Time = 0;
+    float Frame = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
     int Scene = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    int Event = 0; // 0= nothing, 1 = explode, 2 = smoke, 3 = gas, 100 = fliprside, 101 = fliplside, 102 = flipfside, 103 = flipbside
+    int Event = 0; // 0 = nothing, 1 = explode, 2 = extinguish, 3 = smoke, 4 = gas, 100 = fliprside, 101 = fliplside, 102 = flipfside, 103 = flipbside
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite)
-    FString Type = "actor"; // 0 = car, 1 = actor, 2 = camera, 3 = explosion, 4 = smoke, 5 = gas, 6 = mark
+    FString Type = "actor"; // class name
 };

@@ -13,8 +13,8 @@
 		"typescript.tsc.autoDetect": "off",
 		"npm.autoDetect": "off",
 		"files.associations": {
-			"map": "cpp",
-			"queue": "cpp"
+			"__locale": "cpp",
+			"*.ipp": "cpp"
 		}
 	},
 	"extensions": {

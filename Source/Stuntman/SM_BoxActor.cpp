@@ -24,42 +24,7 @@ ASM_BoxActor::ASM_BoxActor()
 // Called when the game starts or when spawned
 void ASM_BoxActor::BeginPlay()
 {
-	TArray<UObject*> pOA ;
-	GetDefaultSubobjects(pOA);		
-	UE_LOG(LogTemp, Warning, TEXT("Found %d components by tag"), pOA.Num());
-
-	//GetAttachedActors(pOA);
-	//GetAttachedComponents(pOA);
-	FString tag = "Blueprint_Effect_Fire";
-
-	if (pOA.Num() > 0) {
-		UE_LOG(LogTemp, Warning, TEXT("Found %d attached actors"), pOA.Num());
-		for (UObject* pA : pOA) {
-			UE_LOG(LogTemp, Warning, TEXT("Found attached actor %s"), *pA->GetName());
-			if (pA->GetName().Equals(tag, ESearchCase::IgnoreCase)) {
-				UE_LOG(LogTemp, Warning, TEXT("Found Blueprint_Effect_Fire"));
-				USceneComponent* pSC = Cast<USceneComponent>(pA);
-				pSC->SetVisibility(true);
-				//pA->SetVisible(true);
-			}
-			else {
-				UE_LOG(LogTemp, Warning, TEXT("Did not find Blueprint_Effect_Fire"));
-			}
-			// log tags
-			//for (FName n : pA->tags) {
-			//	UE_LOG(LogTemp, Warning, TEXT("Tag: %s"), *n.ToString());
-			//}
-			//if (pA->Tags(TEXT("Fire"))) {
-			//	UE_LOG(LogTemp, Warning, TEXT("Found Blueprint_Effect_Fire"));
-			//}
-			//else {
-			//	UE_LOG(LogTemp, Warning, TEXT("Did not find Blueprint_Effect_Fire"));
-			//}
-		}
-	}
-	else {
-		UE_LOG(LogTemp, Warning, TEXT("Did not find attached actors"));
-	}
+	
 	/*
 	UObject* pO = GetDefaultSubobjectByName(TEXT("Blueprint_Effect_Fire"));
 	if (pO) {
@@ -88,5 +53,44 @@ void ASM_BoxActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+}
+
+void ASM_BoxActor::Detonate(bool bDetonate)
+{
+	UE_LOG(LogTemp, Warning, TEXT("Detonate"));
+	TArray<UObject*> pOA ;
+	GetDefaultSubobjects(pOA);		
+	UE_LOG(LogTemp, Warning, TEXT("Found %d components by tag"), pOA.Num());
+	
+	FString tag = "Blueprint_Effect_Fire";
+
+	if (pOA.Num() > 0) {
+		UE_LOG(LogTemp, Warning, TEXT("Found %d attached actors"), pOA.Num());
+		for (UObject* pA : pOA) {
+			UE_LOG(LogTemp, Warning, TEXT("Found attached actor %s"), *pA->GetName());
+			if (pA->GetName().Equals(tag, ESearchCase::IgnoreCase)) {
+				UE_LOG(LogTemp, Warning, TEXT("Found Blueprint_Effect_Fire"));
+				USceneComponent* pSC = Cast<USceneComponent>(pA);
+				pSC->SetVisibility(bDetonate);
+				//pA->SetVisible(true);
+			}
+			else {
+				UE_LOG(LogTemp, Warning, TEXT("Did not find Blueprint_Effect_Fire"));
+			}
+			// log tags
+			//for (FName n : pA->tags) {
+			//	UE_LOG(LogTemp, Warning, TEXT("Tag: %s"), *n.ToString());
+			//}
+			//if (pA->Tags(TEXT("Fire"))) {
+			//	UE_LOG(LogTemp, Warning, TEXT("Found Blueprint_Effect_Fire"));
+			//}
+			//else {
+			//	UE_LOG(LogTemp, Warning, TEXT("Did not find Blueprint_Effect_Fire"));
+			//}
+		}
+	}
+	else {
+		UE_LOG(LogTemp, Warning, TEXT("Did not find attached actors"));
+	}
 }
 

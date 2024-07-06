@@ -10,25 +10,25 @@
 
 /**
  * Event Recorder that streams JSONL objects
+ *  public FTickableGameObject,
  */
-class STUNTMAN_API Recorder : public FTickableGameObject, public ISubscriber
+class STUNTMAN_API Recorder : public ISubscriber
 {
 public:		
 	std::unordered_map<AActor*, std::vector<FRecorderEvent>> recordings;
 	bool Recording = false;	
-	float Time = 0;
-	int Counter = 0;
+	//float Time = 0;
+	int Frame = 0;	
 	int Scene = 1;
 	int Take = 1;	
 	
 	FString SceneName = "Scene";
-	void Tick(float DeltaTime) override;
-	TStatId GetStatId() const override;
-	void SetTime(float AbsoluteTime);
+	//void Tick(float DeltaTime) override;
+	void GotoFrame(int Frame);
 	void NextTake();
 	void PrevTake();
-	void AddEvent(AActor* object);
-	void AddEvents();
+	void AddEvent(AActor* object, int event = 0);
+	void RecordFrame();
 	void NewScene();
 	void Save();
 	void Load();
@@ -46,6 +46,9 @@ public:
 	void LoadStartup();
 	void onMessage(PubSubMessage& message) override;
 	void SpawnObject(FString ActorClassPath, UWorld* world);
+
+	bool IsBarrel(AActor* object);
+	void DetonateObjects(bool bDetonate);
 
 	// use these in Blueprint constructors to add and remove. note: you MUST implement RemoveObject in the destructor
 	static void AddObject(AActor* object);

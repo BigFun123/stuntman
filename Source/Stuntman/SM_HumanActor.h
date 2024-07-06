@@ -15,6 +15,10 @@ public:
 	// Sets default values for this character's properties
 	ASM_HumanActor();
 
+	UPROPERTY(EditAnywhere, Category = Settings)
+	bool IsDirector = false;
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

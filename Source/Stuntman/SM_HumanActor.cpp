@@ -15,7 +15,10 @@ ASM_HumanActor::ASM_HumanActor()
 // Called when the game starts or when spawned
 void ASM_HumanActor::BeginPlay()
 {
-	Recorder::AddObject(this);
+	if (!IsDirector) {
+		Recorder::AddObject(this);
+	}
+
 	Super::BeginPlay();
 	
 }
