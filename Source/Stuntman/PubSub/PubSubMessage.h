@@ -8,5 +8,5 @@ struct PubSubMessage {
     int ipayload2;
     float fpayload;
     FString spayload;
-    UObject* opayload;
+    void* opayload;
 } ;

@@ -23,6 +23,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Timeline")
 	void StopRecording();
+
+	UFUNCTION(BlueprintCallable, Category = "Timeline")
+	void StartPlaying();
+
+	UFUNCTION(BlueprintCallable, Category = "Timeline")
+	void StopPlaying();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
 	bool Playing = false;

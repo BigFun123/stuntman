@@ -37,6 +37,26 @@ void USM_Timeline::StopRecording()
     PubSub::Send(pm);
 }
 
+void USM_Timeline::StartPlaying()
+{
+    Recording = false;
+    Playing = true;
+    PubSubMessage pm;
+    pm.message = SM_PLAYSTART;
+    GEngine->AddOnScreenDebugMessage(0, 0, FColor::Green, FString::Printf(TEXT("Stop Scene 1 Frame %d"), Frame));
+    PubSub::Send(pm);
+}
+
+void USM_Timeline::StopPlaying()
+{
+    Playing = false;
+    Recording = false;
+    PubSubMessage pm;
+    pm.message = SM_PLAYSTOP;    
+	GEngine->AddOnScreenDebugMessage(0, 0, FColor::Green, FString::Printf(TEXT("Start Scene 1 Frame %d"), Frame));
+    PubSub::Send(pm);
+}
+
 void USM_Timeline::Detonate(bool bDetonate)
 {
     PubSubMessage pm;

@@ -46,6 +46,14 @@ void UStuntMenu::OnSaveAsStartupClicked()
 	UE_LOG(LogTemp, Warning, TEXT("Save startup button clicked"));
 }
 
+void UStuntMenu::OnLoadStartupClicked()
+{
+	PubSubMessage pm;
+	pm.message = SM_LOADSTARTUP;
+	PubSub::Send(pm);
+	UE_LOG(LogTemp, Warning, TEXT("Load startup button clicked"));
+}	
+
 void UStuntMenu::OnLoad()
 {
 	PubSubMessage pm;
@@ -88,4 +96,12 @@ void UStuntMenu::PrevTake()
 	pm.ipayload = Take;
 	PubSub::Send(pm);
 	UE_LOG(LogTemp, Warning, TEXT("Prev take button clicked"));
+}
+
+void UStuntMenu::OnTestClicked(const FString& data) {
+	PubSubMessage pm;
+	pm.spayload = data;
+	pm.message = SM_TEST;
+	PubSub::Send(pm);
+	UE_LOG(LogTemp, Warning, TEXT("Test button clicked"));
 }

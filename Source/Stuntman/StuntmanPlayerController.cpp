@@ -16,6 +16,8 @@ void AStuntmanPlayerController::BeginPlay()
 
 	check(VehicleUI);
 
+	bEnableClickEvents = true;
+
 	VehicleUI->AddToViewport();
 }
 

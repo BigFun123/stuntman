@@ -32,4 +32,12 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Box")
 	void Detonate(bool bDetonate);
 
+	UFUNCTION(BlueprintCallable, Category = "Box")
+	void OnClickedHandler(AActor* Target, FKey ButtonPressed);
+
+	
+
+
+	
+
 };

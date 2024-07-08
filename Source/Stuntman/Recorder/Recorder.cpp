@@ -6,7 +6,10 @@
 #include "../PubSub/PubSub.h"
 #include "RecorderConstants.h"
 #include "../SM_BoxActor.h"
+#include "../SM_HumanActor.h"
 #include "Serialization/JsonSerializer.h"
+#include "Blueprint/AIBlueprintHelperLibrary.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "JsonObjectConverter.h"
 
 Recorder &Recorder::GetInstance()
@@ -30,11 +33,12 @@ void Recorder::onMessage(PubSubMessage &payload)
 {
 	if (payload.message == SM_DETONATE)
 	{
-		Frame = payload.ipayload;		
-		RecordFrame();
-		DetonateObjects(payload.bpayload);		
+		Frame = payload.ipayload;
+		// RecordFrame();
+		DetonateObjects(payload.bpayload);
+		Save();
 	}
-	
+
 	if (payload.message == SM_NEW)
 	{
 		NewScene();
@@ -45,11 +49,11 @@ void Recorder::onMessage(PubSubMessage &payload)
 		Take = payload.ipayload;
 		Load();
 	}
-	//if (payload.message == SM_SETTIME)
+	// if (payload.message == SM_SETTIME)
 	//{
 	//	float time = payload.fpayload;
 	//	SetTime(time);
-	//}
+	// }
 	if (payload.message == SM_GOTOFRAME)
 	{
 		GotoFrame(payload.ipayload);
@@ -63,10 +67,14 @@ void Recorder::onMessage(PubSubMessage &payload)
 
 	if (payload.message == SM_INITIALIZING)
 	{
-		Frame = 0;				
+		Frame = 0;
 		Take = 0;
 		SceneName = "Scene";
 		StopRecording();
+	}
+	if (payload.message == SM_LOADSTARTUP)
+	{
+		LoadStartup();
 	}
 	if (payload.message == SM_SAVESTARTUP)
 	{
@@ -78,6 +86,15 @@ void Recorder::onMessage(PubSubMessage &payload)
 		Take = 0;
 		SceneName = "Scene";
 		StopRecording();
+	}
+
+	if (payload.message == SM_PLAYSTART)
+	{
+		StartPlayback();
+	}
+	if (payload.message == SM_PLAYSTOP)
+	{
+		StopPlayback();
 	}
 	if (payload.message == SM_START)
 	{
@@ -94,25 +111,87 @@ void Recorder::onMessage(PubSubMessage &payload)
 	}
 }
 
-/*void Recorder::Tick(float DeltaTime)
+void Recorder::GotoFrame(int InFrame)
 {
-	FColor color = FColor::Green;
-	if (Recording)
+	Frame = InFrame;
+	// get the position of all objects at time, and set their current position to that
+	for (const auto &recording : recordings)
 	{
-		Frame++;		
-		AddEvents();
+		AActor *object = recording.first;
+
+		// UPrimitiveComponent *comp = Cast<UPrimitiveComponent>(object->GetRootComponent());
+		// if (comp)
+		//{
+		//	comp->SetSimulatePhysics(false);
+		// }
+
+		const std::map<int, FRecorderEvent> &events = recording.second;
+
+		auto eventIt = events.find(InFrame);
+		if (eventIt != events.end())
+		{
+			const FRecorderEvent &event = eventIt->second;
+			GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Red, FString::Printf(TEXT("%d event:%d"), event.Frame, event.Event), false);
+
+			// UE_LOG(LogTemp, Warning, TEXT("Event: %d %s"), event->Frame, *event->Name);
+
+			if ((event.Event == SM_EVT_DETONATE) && IsBarrel(object))
+			{
+				ASM_BoxActor *box = Cast<ASM_BoxActor>(object);
+				if (box)
+				{
+					box->Detonate(true);
+				}
+			}
+
+			if (event.Event == SM_EVT_EXTINGUISH && IsBarrel(object))
+			{
+				ASM_BoxActor *box = Cast<ASM_BoxActor>(object);
+				if (box)
+				{
+					box->Detonate(false);
+				}
+			}
+			// object->SetAllPhysicsPosition(event->Position);
+			// object->SetAllPhysicsRotation(FRotator(event->Rotation.X, event->Rotation.Y, event->Rotation.Z));
+			//  set the position of the object to the position of the event
+			
+			// if object is an SM_HumanActor, then move to location
+			// log name
+			// UE_LOG(LogTemp, Warning, TEXT("Name: %s"), *object->GetClass()->GetName());
+
+			if (object->GetClass()->GetName() == TEXT("BP_PlayableVector_C"))
+			{
+				// cast to SM_HumanActor
+				ASM_HumanActor *human = Cast<ASM_HumanActor>(object);
+				
+				// get human location
+				FVector humanLocation = human->GetActorLocation();
+				// if new location is above old location , then jump
+				if (event.Position.Z > (humanLocation.Z + 10))
+				{
+					human->Jump();
+					object->SetActorLocation(event.Position, false, nullptr, ETeleportType::TeleportPhysics);
+				}
+				// check if actor is not on the ground
+				// IsWalking
+				//if ( human->GetCharacterMovement()->IsFalling() == false)
+				else
+				{
+					// if not, then set the actor location					
+					//object->SetActorRotation(event.Rotation, ETeleportType::TeleportPhysics);
+					UAIBlueprintHelperLibrary::SimpleMoveToLocation(human->GetController(), event.Position);
+					//object->SetActorLocation(event.Position, false, nullptr, ETeleportType::TeleportPhysics);
+				} 
+			}
+			else
+			{
+				object->SetActorRotation(event.Rotation, ETeleportType::TeleportPhysics);
+				object->SetActorLocation(event.Position, false, nullptr, ETeleportType::TeleportPhysics);
+			}
+		}
 	}
-	else
-	{
-		color = FColor::Red;
-	}
-
-	FString Message = FString::Printf(TEXT("Scene 1 Take %d  Frame %d"), Take, Frame);
-	GEngine->AddOnScreenDebugMessage(0, 0, color, Message);
-
-	// show a representation of the surrounding 50 events in text format, one per line
-
-}*/
+}
 
 void Recorder::RecordFrame()
 {
@@ -120,14 +199,13 @@ void Recorder::RecordFrame()
 	for (const auto &recording : recordings)
 	{
 		AActor *object = recording.first;
-		const std::vector<FRecorderEvent> events = recording.second;
 
 		if (object->HasActorBegunPlay() == false)
 		{
 			continue;
 		}
 
-		AddEvent(object);
+		AddEvent(object, 0, Frame);
 	}
 }
 
@@ -139,30 +217,33 @@ float Recorder::Round2(float f)
 	return rf;
 }
 
-void Recorder::AddEvent(AActor *actor, int eventCode)
+void Recorder::AddEvent(AActor *actor, int eventCode, int InFrame)
 {
-	FRecorderEvent event;
-	event.Name = actor->GetName();
-	event.Frame = Frame;
-	event.Event = eventCode;
+	FRecorderEvent RecEvent;
+	RecEvent.Name = actor->GetName();
+	RecEvent.Frame = InFrame;
+	RecEvent.Event = eventCode;
 
-	// get physics properties
-	// UPrimitiveComponent *comp = Cast<UPrimitiveComponent>(actor->GetRootComponent());
-	// if (comp) {
-	//	event.Position = comp->GetComponentLocation();
-	//	event.Rotation = comp->GetComponentRotation().Euler();
-	//}
+	RecEvent.Position = actor->GetActorLocation();
+	// RecEvent.Type = actor->GetClass()->GetName();
+	RecEvent.Type = actor->GetClass()->GetPathName();
+	RecEvent.Rotation = actor->GetActorRotation().Quaternion();
+	RecEvent.Velocity = actor->GetVelocity();
+	// RecEvent.AngularVelocity = actor->GetActorAngularVelocity();
+	RecEvent.Scene = Scene;
 
-	event.Position = actor->GetActorLocation();
-	event.Type = actor->GetClass()->GetName();
-	event.Rotation = actor->GetActorRotation().Quaternion();
-	event.Velocity = actor->GetVelocity();
-	// event.AngularVelocity = actor->GetActorAngularVelocity();
-	event.Scene = Scene;
+	// if the RecEvent exists and the existing RecEvent has an RecEvent.Event > 0, keep the Event
+	auto eventIt = recordings[actor].find(InFrame);
+	if (eventIt != recordings[actor].end())
+	{
+		FRecorderEvent existingEvent = eventIt->second;
+		if (existingEvent.Event > 0)
+		{
+			RecEvent.Event = existingEvent.Event;
+		}
+	}
 
-	// std::vector<FRecorderEvent> events = recordings[actor];
-	// events.push_back(event);
-	recordings[actor].push_back(event);
+	recordings[actor][InFrame] = RecEvent;
 }
 
 void Recorder::DetonateObjects(bool bDetonate)
@@ -173,18 +254,18 @@ void Recorder::DetonateObjects(bool bDetonate)
 		AActor *object = recording.first;
 		// if the object is of type SM_BoxActor, then detonate
 		UE_LOG(LogTemp, Warning, TEXT("Class: %s"), *object->GetClass()->GetName());
-		 if (IsBarrel(object))
-		 {
+		if (IsBarrel(object))
+		{
 			// object->Detonate(bDetonate);
 			// cast as SM_BoxActor
-			AddEvent(object, bDetonate == true ? SM_EVT_DETONATE : SM_EVT_EXTINGUISH); // detonate event
-			
+			AddEvent(object, bDetonate == true ? SM_EVT_DETONATE : SM_EVT_EXTINGUISH, Frame); // detonate event
+
 			ASM_BoxActor *box = Cast<ASM_BoxActor>(object);
 			if (box)
 			{
 				box->Detonate(bDetonate);
 			}
-		 }
+		}
 	}
 }
 
@@ -222,11 +303,11 @@ void Recorder::NewScene()
 		AActor *object = recording.first;
 		if (object != nullptr)
 		{
-			if (object->GetClass()->GetName() != "SM_HumanActor")
-			{
-				recordings.erase(object);
-			}
-			else
+			// if (object->GetClass()->GetName() != "SM_HumanActor")
+			//{
+			//	recordings.erase(object);
+			// }
+			// else
 			{
 				// just clear the events
 				recordings[object].clear();
@@ -246,33 +327,32 @@ void Recorder::SpawnObject(FString ActorClassPath, UWorld *world)
 }
 
 // small bug: objects are being added at their spawn location, not their physics settled location
+// all objects are added to frame 0, currently spawning during playback is not supported
 void Recorder::AddObject(AActor *object)
 {
 	// check if the object exists in the recordings map
 	// if it does, then add the current transform to the list
 	// if it doesn't, then create a new list and add the current transform to the list
-	std::unordered_map<AActor *, std::vector<FRecorderEvent>> &recordings = GetInstance().recordings;
+	std::unordered_map<AActor *, std::map<int, FRecorderEvent>> &recordings = GetInstance().recordings;
 
+	// only add if it's not already there
 	if (recordings.find(object) == recordings.end())
 	{
-		std::vector<FRecorderEvent> events;
+		std::map<int, FRecorderEvent> events;
 		recordings[object] = events;
 	}
 
-	GetInstance().AddEvent(object);
+	GetInstance().AddEvent(object, 0, 0);
 }
 
+// remove the object from the recordings
 void Recorder::RemoveObject(AActor *object)
 {
-	// remove the object from the recordings
-	std::unordered_map<AActor *, std::vector<FRecorderEvent>> &recordings = GetInstance().recordings;
-	recordings.erase(object);
+	GetInstance().recordings.erase(object);
 }
 
-void Recorder::StartRecording()
-{	
-	Recording = true;
-
+void Recorder::SimulatePhysics(bool bSimulate)
+{
 	for (const auto &recording : recordings)
 	{
 		AActor *object = recording.first;
@@ -280,30 +360,35 @@ void Recorder::StartRecording()
 		UPrimitiveComponent *comp = Cast<UPrimitiveComponent>(object->GetRootComponent());
 		if (comp)
 		{
-			// check if it's of type SM_BoxActor
-			 if (object->GetClass()->GetName() == "SM_BoxActor")
-			 {
-				comp->SetSimulatePhysics(true);
-			 }
+			if (IsBoxActor(object))
+			{
+				comp->SetSimulatePhysics(bSimulate);
+			}
 		}
 	}
+}
+void Recorder::StartRecording()
+{
+	Recording = true;
+	SimulatePhysics(true);
 }
 
 void Recorder::StopRecording()
 {
 	Recording = false;
+	SimulatePhysics(false);
+}
 
-	for (const auto &recording : recordings)
-	{
-		AActor *object = recording.first;
+void Recorder::StartPlayback()
+{
+	Recording = false;
+	SimulatePhysics(true);
+}
 
-		UPrimitiveComponent *comp = Cast<UPrimitiveComponent>(object->GetRootComponent());
-		if (comp)
-		{
-			comp->SetSimulatePhysics(true);
-		}
-	}
-
+void Recorder::StopPlayback()
+{
+	Recording = false;
+	SimulatePhysics(true); // sic - we want to be able to drive after / during playback
 }
 
 void Recorder::SaveStartup()
@@ -321,27 +406,32 @@ void Recorder::SaveStartup()
 	{
 		FString outputString;
 		const AActor *object = recording.first;
-		const std::vector<FRecorderEvent> events = recording.second;
+		const std::map<int, FRecorderEvent> &events = recording.second;
 
 		// get first event
 		if (events.size() > 0)
 		{
-			FRecorderEvent event = events[0];
-			// serialize event to string
+			// FRecorderEvent& event = events[0];
+			auto eventIt = events.find(0);
+			if (eventIt != events.end())
+			{
+				FRecorderEvent event = eventIt->second;
 
-			FJsonObjectConverter::UStructToJsonObjectString<FRecorderEvent>(event, outputString, 0, 0);
-			// remove all "\r\n" from outputstring
-			outputString = outputString.Replace(TEXT("\r\n"), TEXT(""));
-			outputString = outputString.Replace(TEXT("\n"), TEXT(""));
-			outputString = outputString.Replace(TEXT("\t"), TEXT(""));
-			outputString = outputString.Replace(TEXT(": "), TEXT(":"));
-			outputString = outputString.Replace(TEXT("  "), TEXT(""));
-			outputString = outputString.Replace(TEXT("  "), TEXT(""));
-			outputString = outputString.Replace(TEXT("  "), TEXT(""));
+				// serialize event to string
+				FJsonObjectConverter::UStructToJsonObjectString<FRecorderEvent>(event, outputString, 0, 0);
 
-			outputString += "\n";
+				// remove all "\r\n" from outputstring
+				outputString = outputString.Replace(TEXT("\r\n"), TEXT(""));
+				outputString = outputString.Replace(TEXT("\n"), TEXT(""));
+				outputString = outputString.Replace(TEXT("\t"), TEXT(""));
+				outputString = outputString.Replace(TEXT(": "), TEXT(":"));
+				outputString = outputString.Replace(TEXT("  "), TEXT(""));
+				outputString = outputString.Replace(TEXT("  "), TEXT(""));
+				outputString = outputString.Replace(TEXT("  "), TEXT(""));
 
-			output += outputString;
+				outputString += "\n";
+				output += outputString;
+			}
 		}
 	}
 
@@ -362,7 +452,7 @@ void Recorder::Save()
 	for (const auto &recording : recordings)
 	{
 		const AActor *object = recording.first;
-		const std::vector<FRecorderEvent> events = recording.second;
+		const std::map<int, FRecorderEvent> events = recording.second;
 
 		if (object->HasActorBegunPlay() == false)
 		{
@@ -374,7 +464,7 @@ void Recorder::Save()
 		{
 			// serialize event to string
 			FString outputString;
-			FJsonObjectConverter::UStructToJsonObjectString<FRecorderEvent>(event, outputString, 0, 0);
+			FJsonObjectConverter::UStructToJsonObjectString<FRecorderEvent>(event.second, outputString, 0, 0);
 			// remove all "\r\n" from outputstring
 			outputString = outputString.Replace(TEXT("\r\n"), TEXT(""));
 			outputString = outputString.Replace(TEXT("\n"), TEXT(""));
@@ -394,6 +484,66 @@ void Recorder::Save()
 
 void Recorder::LoadStartup()
 {
+	// load the recordings map from a JSONL file
+	// read the json objects one by one and add each to the recordings based on the name (find the actory by name)
+	FString SaveDirectory = FPaths::ProjectSavedDir();
+	FString FileName = FString::Printf(TEXT("Scene_%d_Startup.jsonl"), Scene, Take);
+	FString AbsoluteFilePath = SaveDirectory + FileName;
+	// if file does not exist, return
+	if (!FPaths::FileExists(AbsoluteFilePath))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("File Does Not Exist: %s"), *AbsoluteFilePath);
+		return;
+	}
+
+	FString output;
+	FFileHelper::LoadFileToString(output, *AbsoluteFilePath);
+
+	// parse the JSONL file
+	TArray<FString> lines;
+	output.ParseIntoArray(lines, TEXT("\n"), true);
+
+	for (const auto &line : lines)
+	{
+		// parse the JSON object
+		TSharedPtr<FJsonObject> JsonObject;
+		TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(line);
+		// deserialize into a FRecorderEvent
+
+		// find object by name
+		AActor *object = nullptr;
+		// add event to recordings
+
+		FRecorderEvent event;
+		if (FJsonObjectConverter::JsonObjectStringToUStruct(line, &event, 0, 0) == true)
+		{
+			// get name
+			FString name = event.Name;
+			// find object by name in recordings
+			for (auto &recording : recordings)
+			{
+				AActor *recordingObject = reinterpret_cast<AActor *>(recording.first);
+				if (recordingObject->GetName() == name)
+				{
+					object = recordingObject;
+					break;
+				}
+			}
+			if (object != nullptr)
+			{
+				recordings[object][event.Frame] = event;
+			}
+			else
+			{
+				// if the object is not found, spawn it
+				// SpawnObject(event.Type, object->GetWorld());
+				PubSubMessage message;
+				message.message = SM_SPAWN;
+				message.opayload = &event;
+				PubSub::Send(message);
+			}
+		};
+	}
 }
 
 void Recorder::Load()
@@ -445,7 +595,7 @@ void Recorder::Load()
 			}
 			if (object != nullptr)
 			{
-				recordings[object].push_back(event);
+				recordings[object][event.Frame] = event;
 			}
 		};
 	}
@@ -461,7 +611,7 @@ void Recorder::LogJSON(const FString &AbsoluteFilePath)
 	for (const auto &recording : recordings)
 	{
 		const AActor *object = recording.first;
-		const std::vector<FRecorderEvent> events = recording.second;
+		const std::map<int, FRecorderEvent> *events = &recording.second;
 
 		if (object->HasActorBegunPlay() == false)
 		{
@@ -534,62 +684,14 @@ void Recorder::LogText()
 }
 
 bool Recorder::IsBarrel(AActor *object)
-{	
-	return (object->GetClass()->GetName() == TEXT("BP_Barrel_C"));	
+{
+	return (object->GetClass()->GetName() == TEXT("BP_Barrel_C"));
 }
 
-void Recorder::GotoFrame(int InFrame)
+bool Recorder::IsBoxActor(AActor *object)
 {
-	Frame = InFrame;
-	// get the position of all objects at time, and set their current position to that
-	for (const auto &recording : recordings)
-	{
-		AActor *object = recording.first;
-
-		UPrimitiveComponent *comp = Cast<UPrimitiveComponent>(object->GetRootComponent());
-		if (comp)
-		{
-			comp->SetSimulatePhysics(false);
-		}
-
-		const std::vector<FRecorderEvent> *events = &recording.second;
-		// walk up events until the time is greater than the current time
-		for (int i = 0; i < events->size(); i++)
-		{
-			const FRecorderEvent *event = &events->at(i);
-			if (event->Frame >= Frame)
-			{
-
-				GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Red, FString::Printf(TEXT("%d event:%s"), event->Frame, event->Event), false);
-				//UE_LOG(LogTemp, Warning, TEXT("Event: %d %s"), event->Frame, *event->Name);
-
-				if (event->Event == SM_EVT_DETONATE && IsBarrel(object))
-				{
-					ASM_BoxActor *box = Cast<ASM_BoxActor>(object);
-					if (box)
-					{
-						box->Detonate(true);
-					}
-				}
-
-				if (event->Event == SM_EVT_EXTINGUISH && IsBarrel(object))
-				{
-					ASM_BoxActor *box = Cast<ASM_BoxActor>(object);
-					if (box)
-					{
-						box->Detonate(false);
-					}
-				}
-				// object->SetAllPhysicsPosition(event->Position);
-				// object->SetAllPhysicsRotation(FRotator(event->Rotation.X, event->Rotation.Y, event->Rotation.Z));
-				//  set the position of the object to the position of the event
-				object->SetActorLocation(event->Position, false, nullptr, ETeleportType::TeleportPhysics);
-				object->SetActorRotation(event->Rotation, ETeleportType::TeleportPhysics);
-				break;
-			}
-		}
-	}
-	// find the time in the
+	// find if an object is of type SM_BoxActor or extends from SM_BoxActor
+	return object->GetClass()->IsChildOf(ASM_BoxActor::StaticClass());
 }
 
 void Recorder::NextTake()

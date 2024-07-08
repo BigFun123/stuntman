@@ -15,6 +15,7 @@ class STUNTMAN_API ASM_Stuntman_Main : public AActor, public ISubscriber
 public:	
 	// Sets default values for this actor's properties
 	ASM_Stuntman_Main();
+	~ASM_Stuntman_Main();
 
 protected:
 	// Called when the game starts or when spawned

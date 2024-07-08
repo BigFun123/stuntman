@@ -34,6 +34,9 @@ class STUNTMAN_API UStuntMenu : public UUserWidget
 	void OnSaveAsStartupClicked();
 
 	UFUNCTION(BlueprintCallable, Category=UI)
+	void OnLoadStartupClicked();
+
+	UFUNCTION(BlueprintCallable, Category=UI)
 	void OnLoad();
 	
 	UFUNCTION(BlueprintCallable, Category=UI)
@@ -44,6 +47,9 @@ class STUNTMAN_API UStuntMenu : public UUserWidget
 
 	UFUNCTION(BlueprintCallable, Category=UI)
 	void PrevTake();
+
+	UFUNCTION(BlueprintCallable, Category=UI)
+	void OnTestClicked(const FString& data);
 
 public:
 	UPROPERTY(EditAnywhere, Category=UI)

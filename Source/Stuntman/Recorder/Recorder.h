@@ -3,10 +3,13 @@
 #pragma once
 
 #include <vector>
+#include <map>
 #include <unordered_map>
 #include "RecorderEvent.h"
 #include "CoreMinimal.h"
 #include "../PubSub/Subscriber.h"
+
+class UPawnMovementComponent;
 
 /**
  * Event Recorder that streams JSONL objects
@@ -15,19 +18,20 @@
 class STUNTMAN_API Recorder : public ISubscriber
 {
 public:		
-	std::unordered_map<AActor*, std::vector<FRecorderEvent>> recordings;
+	std::unordered_map<AActor*, std::map<int, FRecorderEvent>> recordings;
 	bool Recording = false;	
 	//float Time = 0;
 	int Frame = 0;	
 	int Scene = 1;
 	int Take = 1;	
+	UWorld* World;
 	
 	FString SceneName = "Scene";
 	//void Tick(float DeltaTime) override;
 	void GotoFrame(int Frame);
 	void NextTake();
 	void PrevTake();
-	void AddEvent(AActor* object, int event = 0);
+	void AddEvent(AActor* object, int event = 0, int InFrame = 0);
 	void RecordFrame();
 	void NewScene();
 	void Save();
@@ -42,12 +46,17 @@ public:
 	void LogJSON(const FString& name);
 	void StartRecording();
 	void StopRecording();
+	void StartPlayback();
+	void StopPlayback();
+
 	void SaveStartup();
 	void LoadStartup();
+	void SimulatePhysics(bool bSimulate);
 	void onMessage(PubSubMessage& message) override;
 	void SpawnObject(FString ActorClassPath, UWorld* world);
 
 	bool IsBarrel(AActor* object);
+	bool IsBoxActor(AActor* object);
 	void DetonateObjects(bool bDetonate);
 
 	// use these in Blueprint constructors to add and remove. note: you MUST implement RemoveObject in the destructor

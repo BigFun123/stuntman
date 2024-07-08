@@ -3,6 +3,7 @@
 
 #include "SM_Stuntman_Main.h"
 #include "PubSub/PubSub.h"
+#include "Recorder/RecorderEvent.h"
 #include "Recorder/RecorderConstants.h"
 
 // Sets default values
@@ -10,14 +11,19 @@ ASM_Stuntman_Main::ASM_Stuntman_Main()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
+	
+}
 
+ASM_Stuntman_Main::~ASM_Stuntman_Main()
+{
+	PubSub::Unsubscribe(this);
 }
 
 // Called when the game starts or when spawned
 void ASM_Stuntman_Main::BeginPlay()
 {
-	Super::BeginPlay();
-	
+	PubSub::Subscribe(this);
+	Super::BeginPlay();	
 }
 
 // Called every frame
@@ -38,16 +44,57 @@ void ASM_Stuntman_Main::SpawnObject(FString ActorClassPath, UWorld* world)
 
 void ASM_Stuntman_Main::onMessage(PubSubMessage& payload)
 {
-	if (payload.message == SM_SPAWN) {
+	if (payload.message == SM_TEST) {
+		//FRecorderEvent* event = (FRecorderEvent*)payload.opayload;
+		UWorld* world = GetWorld();		
 		FString ActorClassPath = payload.spayload;
-		UWorld* world = (UWorld*)payload.opayload;
+		UE_LOG(LogTemp, Warning, TEXT("ActorClassPath: %s"), *ActorClassPath);
+
 		FActorSpawnParameters spawnParams;
-		spawnParams.Owner = this;
+		//spawnParams.Instigator = this;
+		spawnParams.Owner = this;		
+		// check if event->Name is null
+		//spawnParams.Name = FName(*event->Name);
+		
 		spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
-		FVector location = FVector(0, 0, 0);
-		FRotator rotation = FRotator(0, 0, 0);
-		FActorSpawnParameters params;
+		FVector location = FVector(0,0,0);
+		//create new rotator at 0,0,0
+		FRotator rotation = FRotator(0,0,0);
 		//AActor* pA = world->SpawnActor<AActor>(FString::Printf(TEXT("%s"), *ActorClassPath), location, rotation, params);
+		UClass* actorClass = LoadObject<UClass>(NULL, *ActorClassPath);
+		try {
+			AActor* pA = world->SpawnActor(actorClass, &location, &rotation, spawnParams);
+		} catch (const std::exception& e) {
+			UE_LOG(LogTemp, Warning, TEXT("Exception: %s"), *FString(e.what()));
+		}
+
+	}
+	if (payload.message == SM_SPAWN) {
+		FRecorderEvent* event = (FRecorderEvent*)payload.opayload;
+		UWorld* world = GetWorld();		
+
+		//FString ActorClassPath = payload.spayload;		
+		// get ActorClassPath for blueprint by Blueprint name in event.Type
+		FString ActorClassPath = FString(event->Type);
+		UE_LOG(LogTemp, Warning, TEXT("ActorClassPath: %s"), *ActorClassPath);
+		
+		//FStringAssetReference itemRef = "Class'/Game/Blueprints/Items/Chest/chestBlue.chestBlue_C'"; UObject* itemObj = itemRef.ResolveObject(); AARArmor* item = GetWorld()->SpawnActor(itemObj->GetClass(),...
+
+		FActorSpawnParameters spawnParams;
+		//spawnParams.Instigator = this;
+		spawnParams.Owner = this;
+		spawnParams.Name = FName(*event->Name);
+		spawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+		FVector location = event->Position;
+		FRotator rotation = FRotator(event->Rotation);
+		//AActor* pA = world->SpawnActor<AActor>(FString::Printf(TEXT("%s"), *ActorClassPath), location, rotation, params);
+		UClass* actorClass = LoadObject<UClass>(NULL, *ActorClassPath);
+		try {
+			AActor* pA = world->SpawnActor(actorClass, &location, &rotation, spawnParams);
+		} catch (const std::exception& e) {
+			UE_LOG(LogTemp, Warning, TEXT("Exception: %s"), *FString(e.what()));
+		}
+		
 	}
 	if (payload.message == SM_DESTROY) {
 		AActor* pA = (AActor*)payload.opayload;
