@@ -6,7 +6,7 @@
 ASM_Gizmo::ASM_Gizmo()
 {
 	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	//PrimaryActorTick.bCanEverTick = true;
 }
 
 // Called when the game starts or when spawned
@@ -27,7 +27,7 @@ void ASM_Gizmo::AttachTo(AActor *actor)
 	SetActorLocation(actor->GetActorLocation());
 
 	// disable actor physics
-	actor->SetActorEnableCollision(false);
+	/*actor->SetActorEnableCollision(false);
 	// get actor root component
 	UPrimitiveComponent *comp = Cast<UPrimitiveComponent>(actor->GetRootComponent());
 	if (comp)
@@ -36,16 +36,16 @@ void ASM_Gizmo::AttachTo(AActor *actor)
 	}
 
 	// check if Attached is still valid
-	
+
 	if (Attached) {
 		// detach from previous actor
 		Attached->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
-	
+		Attached = nullptr;	
 	}
 	// attach actor to gizmo
 	actor->AttachToActor(this, FAttachmentTransformRules::KeepWorldTransform);
 	Attached = actor;
 
 	// attach to actor
-	// AttachToActor(actor, FAttachmentTransformRules::KeepWorldTransform);
+	// AttachToActor(actor, FAttachmentTransformRules::KeepWorldTransform);*/
 }

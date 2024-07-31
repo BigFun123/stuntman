@@ -2,7 +2,6 @@
 
 
 #include "SM_HumanActor.h"
-#include "Recorder/Recorder.h"
 
 // Sets default values
 ASM_HumanActor::ASM_HumanActor()
@@ -15,17 +14,11 @@ ASM_HumanActor::ASM_HumanActor()
 // Called when the game starts or when spawned
 void ASM_HumanActor::BeginPlay()
 {
-	if (!IsDirector) {
-		Recorder::AddObject(this);
-	}
-
 	Super::BeginPlay();
-	
 }
 
 void ASM_HumanActor::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	Recorder::RemoveObject(this);
 	Super::EndPlay(EndPlayReason);
 }
 

@@ -97,6 +97,8 @@ public:
 
 	virtual void Tick(float Delta) override;
 
+	virtual void BeginPlay() override;
+
 	// End Actor interface
 
 protected:

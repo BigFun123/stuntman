@@ -38,21 +38,11 @@ void ASM_BoxActor::BeginPlay()
 
 */
 	// only add if we're not an editor object
-	if (!HasAnyFlags(RF_Transient))
-	{
-		Recorder::AddObject(this);
-		OnClicked.AddDynamic(this, &ASM_BoxActor::OnClickedHandler);		
-		APlayerController *pPC = GetWorld()->GetFirstPlayerController();
-		//FString path = FName(*this->GeneratedClass());
-		//UE_LOG(LogTemp, Warning, path);
-		pPC->bEnableClickEvents = true;
-		pPC->bShowMouseCursor = true;
-		pPC->bEnableMouseOverEvents = true;
-		// pPC->bEnableTouch = true;
-		pPC->bEnableTouchEvents = true;
-		pPC->bEnableTouchOverEvents = true;
-		pPC->bEnableTouchOverEvents = true;
-	}
+	//if (!HasAnyFlags(RF_Transient))
+	//{
+	//	Recorder::AddObject(this);
+	//	OnClicked.AddDynamic(this, &ASM_BoxActor::OnClickedHandler);
+	//}
 	Super::BeginPlay();
 }
 
@@ -114,7 +104,7 @@ void ASM_BoxActor::Detonate(bool bDetonate)
 
 void ASM_BoxActor::OnClickedHandler(AActor *Target, FKey ButtonPressed)
 {
-	UE_LOG(LogTemp, Warning, TEXT("Clicked"));
+/*	UE_LOG(LogTemp, Warning, TEXT("Clicked"));
 	// find SM_Gizmo_BP in scene
 	// if found, set visibility to true
 	// if not found, spawn SM_Gizmo_BP
@@ -147,6 +137,6 @@ void ASM_BoxActor::OnClickedHandler(AActor *Target, FKey ButtonPressed)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Did not find world"));
 	}
-
+*/
 
 }

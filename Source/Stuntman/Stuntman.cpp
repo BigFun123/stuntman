@@ -2,9 +2,6 @@
 
 #include "Stuntman.h"
 #include "Modules/ModuleManager.h"
-#include "Recorder/Recorder.h"
 
 IMPLEMENT_PRIMARY_GAME_MODULE( FDefaultGameModuleImpl, Stuntman, "Stuntman" );
  
-// instantiate Recorder
-Recorder SM_REC = Recorder::GetInstance();

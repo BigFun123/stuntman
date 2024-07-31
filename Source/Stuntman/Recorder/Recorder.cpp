@@ -29,6 +29,21 @@ Recorder::~Recorder()
 	StopRecording();
 }
 
+void Recorder::Clear()
+{
+	recordings.clear();
+}
+
+void Recorder::ClearSelected()
+{
+	//SelectedObject = nullptr;
+	// clear the events for the selected actor
+	if (SelectedObject != nullptr)
+	{
+		recordings[SelectedObject].clear();
+	}
+}
+
 void Recorder::onMessage(PubSubMessage &payload)
 {
 	if (payload.message == SM_DETONATE)
@@ -109,10 +124,20 @@ void Recorder::onMessage(PubSubMessage &payload)
 	{
 		Load();
 	}
+	if (payload.message == SM_SAVE)
+	{
+		Save();
+	}
+	if (payload.message == SM_SELECT) {
+		SelectedObject = (AActor *)payload.opayload;
+	}
+	if (payload.message == SM_CLEARSELECTED) {
+		ClearSelected();
+	}
 }
 
 void Recorder::GotoFrame(int InFrame)
-{
+{	
 	Frame = InFrame;
 	// get the position of all objects at time, and set their current position to that
 	for (const auto &recording : recordings)
@@ -131,8 +156,6 @@ void Recorder::GotoFrame(int InFrame)
 		if (eventIt != events.end())
 		{
 			const FRecorderEvent &event = eventIt->second;
-			GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Red, FString::Printf(TEXT("%d event:%d"), event.Frame, event.Event), false);
-
 			// UE_LOG(LogTemp, Warning, TEXT("Event: %d %s"), event->Frame, *event->Name);
 
 			if ((event.Event == SM_EVT_DETONATE) && IsBarrel(object))
@@ -155,7 +178,7 @@ void Recorder::GotoFrame(int InFrame)
 			// object->SetAllPhysicsPosition(event->Position);
 			// object->SetAllPhysicsRotation(FRotator(event->Rotation.X, event->Rotation.Y, event->Rotation.Z));
 			//  set the position of the object to the position of the event
-			
+
 			// if object is an SM_HumanActor, then move to location
 			// log name
 			// UE_LOG(LogTemp, Warning, TEXT("Name: %s"), *object->GetClass()->GetName());
@@ -164,33 +187,45 @@ void Recorder::GotoFrame(int InFrame)
 			{
 				// cast to SM_HumanActor
 				ASM_HumanActor *human = Cast<ASM_HumanActor>(object);
-				
+
 				// get human location
 				FVector humanLocation = human->GetActorLocation();
+				float dist = FVector::Dist(humanLocation, event.Position);
+				GEngine->AddOnScreenDebugMessage(0, 5.f, FColor::Red, FString::Printf(TEXT("dist: %f"), dist), false);
+				
 				// if new location is above old location , then jump
-				if (event.Position.Z > (humanLocation.Z + 10))
+				if (event.Position.Z > (humanLocation.Z + 30)) 
 				{
-					human->Jump();
+					human->Jump(); 
 					object->SetActorLocation(event.Position, false, nullptr, ETeleportType::TeleportPhysics);
 				}
 				// check if actor is not on the ground
 				// IsWalking
-				//if ( human->GetCharacterMovement()->IsFalling() == false)
+				// if ( human->GetCharacterMovement()->IsFalling() == false)
 				else
 				{
-					// if not, then set the actor location					
-					//object->SetActorRotation(event.Rotation, ETeleportType::TeleportPhysics);
-					UAIBlueprintHelperLibrary::SimpleMoveToLocation(human->GetController(), event.Position);
-					//object->SetActorLocation(event.Position, false, nullptr, ETeleportType::TeleportPhysics);
-				} 
+					
+					if ((PreviousFrame > Frame) || (dist > 350))
+					{
+						object->SetActorRotation(event.Rotation, ETeleportType::TeleportPhysics);
+						object->SetActorLocation(event.Position, false, nullptr, ETeleportType::TeleportPhysics);
+						
+					}
+					else
+					{
+						human->GetCharacterMovement()->MaxWalkSpeed = 1600;
+						UAIBlueprintHelperLibrary::SimpleMoveToLocation(human->GetController(), event.Position);
+					}
+				}
 			}
 			else
 			{
 				object->SetActorRotation(event.Rotation, ETeleportType::TeleportPhysics);
 				object->SetActorLocation(event.Position, false, nullptr, ETeleportType::TeleportPhysics);
 			}
-		}
+		}		
 	}
+	PreviousFrame = Frame;
 }
 
 void Recorder::RecordFrame()

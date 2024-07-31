@@ -29,6 +29,15 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Timeline")
 	void StopPlaying();
+
+	UFUNCTION(BlueprintCallable, Category = "Timeline")
+	void Rewind();
+
+	UFUNCTION(BlueprintCallable, Category = "Timeline")
+	void Forward();
+
+	UFUNCTION(BlueprintCallable, Category = "Timeline")
+	void ClearSelected();	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Timeline")
 	bool Playing = false;

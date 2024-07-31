@@ -57,6 +57,37 @@ void USM_Timeline::StopPlaying()
     PubSub::Send(pm);
 }
 
+void USM_Timeline::Rewind()
+{
+    Playing = false;
+    Recording = false;
+    PubSubMessage pm;
+    Frame = 0;
+    pm.message = SM_GOTOFRAME;    
+    pm.ipayload = 0;
+	GEngine->AddOnScreenDebugMessage(0, 0, FColor::Green, FString::Printf(TEXT("Rewind Scene 1 Frame %d"), Frame));
+    PubSub::Send(pm);
+}
+
+void USM_Timeline::Forward()
+{
+    Playing = false;
+    Recording = false;
+    PubSubMessage pm;
+    pm.message = SM_GOTOFRAME;    
+    pm.ipayload = Frame;
+    GEngine->AddOnScreenDebugMessage(0, 0, FColor::Green, FString::Printf(TEXT("Forward Scene 1 Frame %d"), Frame));
+    PubSub::Send(pm);
+}
+
+void USM_Timeline::ClearSelected()
+{
+    PubSubMessage pm;
+    pm.message = SM_CLEARSELECTED;
+    PubSub::Send(pm);
+}
+
+
 void USM_Timeline::Detonate(bool bDetonate)
 {
     PubSubMessage pm;
@@ -71,7 +102,7 @@ void USM_Timeline::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
 {
     Super::NativeTick(MyGeometry, InDeltaTime);
 
-    GEngine->AddOnScreenDebugMessage(0, 0, FColor::Red, FString::Printf(TEXT("Scene 1 Frame %d"), Frame));
+    //GEngine->AddOnScreenDebugMessage(0, 0, FColor::Red, FString::Printf(TEXT("Scene 1 Frame %d"), Frame));
     
     // todo add time to event
     if (Recording)

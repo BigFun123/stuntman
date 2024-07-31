@@ -23,6 +23,8 @@ static const FString SM_PLAYSTOP = FString("SM_PLAYSTOP");
 
 static const FString SM_DESTROY = FString("SM_DESTROY");
 static const FString SM_SPAWN = FString("SM_SPAWN"); 
+static const FString SM_SELECT = FString("SM_SELECT"); 
+static const FString SM_CLEARSELECTED = FString("SM_CLEARSELECTED"); 
 
 static const FString SM_DETONATE = FString("SM_DETONATE"); 
 

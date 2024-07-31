@@ -3,6 +3,7 @@
 
 #include "SM_Stuntman_Main.h"
 #include "PubSub/PubSub.h"
+#include "Recorder/Recorder.h"
 #include "Recorder/RecorderEvent.h"
 #include "Recorder/RecorderConstants.h"
 
@@ -11,7 +12,6 @@ ASM_Stuntman_Main::ASM_Stuntman_Main()
 {
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-	
 }
 
 ASM_Stuntman_Main::~ASM_Stuntman_Main()
@@ -22,8 +22,18 @@ ASM_Stuntman_Main::~ASM_Stuntman_Main()
 // Called when the game starts or when spawned
 void ASM_Stuntman_Main::BeginPlay()
 {
+	// instantiate Recorder
+	Recorder SM_REC = Recorder::GetInstance();
 	PubSub::Subscribe(this);
 	Super::BeginPlay();	
+}
+
+void ASM_Stuntman_Main::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	Recorder SM_REC = Recorder::GetInstance();
+	SM_REC.Clear();
+	PubSub::Unsubscribe(this);
+	Super::EndPlay(EndPlayReason);
 }
 
 // Called every frame
@@ -62,11 +72,11 @@ void ASM_Stuntman_Main::onMessage(PubSubMessage& payload)
 		FRotator rotation = FRotator(0,0,0);
 		//AActor* pA = world->SpawnActor<AActor>(FString::Printf(TEXT("%s"), *ActorClassPath), location, rotation, params);
 		UClass* actorClass = LoadObject<UClass>(NULL, *ActorClassPath);
-		try {
+		//try {
 			AActor* pA = world->SpawnActor(actorClass, &location, &rotation, spawnParams);
-		} catch (const std::exception& e) {
-			UE_LOG(LogTemp, Warning, TEXT("Exception: %s"), *FString(e.what()));
-		}
+		//} catch (const std::exception& e) {
+		//	UE_LOG(LogTemp, Warning, TEXT("Exception: %s"), *FString(e.what()));
+		//}
 
 	}
 	if (payload.message == SM_SPAWN) {
@@ -89,11 +99,11 @@ void ASM_Stuntman_Main::onMessage(PubSubMessage& payload)
 		FRotator rotation = FRotator(event->Rotation);
 		//AActor* pA = world->SpawnActor<AActor>(FString::Printf(TEXT("%s"), *ActorClassPath), location, rotation, params);
 		UClass* actorClass = LoadObject<UClass>(NULL, *ActorClassPath);
-		try {
+		//try {
 			AActor* pA = world->SpawnActor(actorClass, &location, &rotation, spawnParams);
-		} catch (const std::exception& e) {
-			UE_LOG(LogTemp, Warning, TEXT("Exception: %s"), *FString(e.what()));
-		}
+		//} catch (const std::exception& e) {
+		//	UE_LOG(LogTemp, Warning, TEXT("Exception: %s"), *FString(e.what()));
+		//}
 		
 	}
 	if (payload.message == SM_DESTROY) {

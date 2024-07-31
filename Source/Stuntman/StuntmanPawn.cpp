@@ -18,7 +18,7 @@ DEFINE_LOG_CATEGORY(LogTemplateVehicle);
 
 AStuntmanPawn::AStuntmanPawn()
 {
-	Recorder::AddObject(this);
+	
 	// construct the front camera boom
 	FrontSpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("Front Spring Arm"));
 	FrontSpringArm->SetupAttachment(GetMesh());
@@ -209,6 +209,12 @@ void AStuntmanPawn::ResetVehicle(const FInputActionValue& Value)
 AStuntmanPawn::~AStuntmanPawn()
 {	
 	Recorder::RemoveObject(this);
+
+}
+
+void AStuntmanPawn::BeginPlay()
+{
+	Recorder::AddObject(this);
 }
 
 

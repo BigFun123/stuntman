@@ -19,8 +19,10 @@ class STUNTMAN_API Recorder : public ISubscriber
 {
 public:		
 	std::unordered_map<AActor*, std::map<int, FRecorderEvent>> recordings;
+	AActor* SelectedObject = nullptr;
 	bool Recording = false;	
 	//float Time = 0;
+	int PreviousFrame = 0;
 	int Frame = 0;	
 	int Scene = 1;
 	int Take = 1;	
@@ -36,6 +38,8 @@ public:
 	void NewScene();
 	void Save();
 	void Load();
+	void Clear();
+	void ClearSelected();
 
 	Recorder();
 	virtual ~Recorder();
@@ -65,4 +69,6 @@ public:
 	
 	static int GetTake();
 	static int GetScene();
+
+
 };
